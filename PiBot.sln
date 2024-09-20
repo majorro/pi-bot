@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8F96278B-7229-473F-A248-FF45D8D9F041}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+		.env = .env
+		docker-compose.prod.yml = docker-compose.prod.yml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiBot.Core", "src\PiBot.Core\PiBot.Core.csproj", "{33995D01-3B85-4598-9FD7-50D047CF4703}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiBot.Discord", "src\PiBot.Discord\PiBot.Discord.csproj", "{65798762-C1C3-4C11-BED7-BDD1AC659A8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiBot.Telegram", "src\PiBot.Telegram\PiBot.Telegram.csproj", "{BD81B1DA-7C17-468F-8AF4-F591FB00D857}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiBot.Data", "src\PiBot.Data\PiBot.Data.csproj", "{C6F0769B-9E1E-4710-A5F3-49A414B2AC95}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{33995D01-3B85-4598-9FD7-50D047CF4703}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33995D01-3B85-4598-9FD7-50D047CF4703}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33995D01-3B85-4598-9FD7-50D047CF4703}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33995D01-3B85-4598-9FD7-50D047CF4703}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65798762-C1C3-4C11-BED7-BDD1AC659A8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65798762-C1C3-4C11-BED7-BDD1AC659A8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65798762-C1C3-4C11-BED7-BDD1AC659A8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65798762-C1C3-4C11-BED7-BDD1AC659A8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD81B1DA-7C17-468F-8AF4-F591FB00D857}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD81B1DA-7C17-468F-8AF4-F591FB00D857}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD81B1DA-7C17-468F-8AF4-F591FB00D857}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD81B1DA-7C17-468F-8AF4-F591FB00D857}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6F0769B-9E1E-4710-A5F3-49A414B2AC95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6F0769B-9E1E-4710-A5F3-49A414B2AC95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6F0769B-9E1E-4710-A5F3-49A414B2AC95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6F0769B-9E1E-4710-A5F3-49A414B2AC95}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+EndGlobal
