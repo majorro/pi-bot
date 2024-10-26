@@ -14,7 +14,7 @@
       - db-data:/var/lib/postgresql/data
   telegram:
     profiles: ["app"]
-    image: majorro/pi-bot-tg:latest
+    image: ghcr.io/majorro/pi-bot-tg:latest
     container_name: pi-bot-telegram
     restart: on-failure
     build:
@@ -26,7 +26,7 @@
       - postgres
   discord:
     profiles: ["app"]
-    image: majorro/pi-bot-dc:latest
+    image: ghcr.io/majorro/pi-bot-dc:latest
     container_name: pi-bot-discord
     restart: on-failure
     build:
