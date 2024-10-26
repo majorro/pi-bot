@@ -20,6 +20,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create dummy .env
+        run: touch .env
+
       - name: Build images
         run: docker compose build
 
