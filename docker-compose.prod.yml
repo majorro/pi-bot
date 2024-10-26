@@ -15,6 +15,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
   telegram:
+    profiles: ["app"]
     image: majorro/pi-bot-tg:latest
     container_name: pi-bot-telegram
     restart: always
@@ -23,6 +24,7 @@ services:
     depends_on:
       - postgres
   discord:
+    profiles: ["app"]
     image: majorro/pi-bot-dc:latest
     container_name: pi-bot-discord
     restart: always
