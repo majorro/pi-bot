@@ -1,83 +1,63 @@
-using PiBot.Core.Utils;
-using PiBot.Data;
-using PiBot.Data.Utils.Extensions;
+using PiBot.Core.Configuration;
+using PiBot.Core.Contracts;
+using PiBot.Data.Common.Extensions;
+using PiBot.Data.Readonly;
+using PiBot.Data.Telegram;
 using PiBot.Telegram;
+using PiBot.Telegram.Modules.Configuration;
 using PiBot.Telegram.Services;
 using PiBot.Telegram.Services.Polling;
+using Serilog;
+using Serilog.Events;
 using Telegram.Bot;
 
-// TODO: ?
-DotEnv.TryLoad("../../.env");
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateLogger();
 
-if (Environment.GetEnvironmentVariable("USE_LONGPOLLING") == "true")
+DotEnv.TryLoad("../../.env"); // for local run
+
+// TODO: fix when https://github.com/DaveSenn/ConfigurationPlaceholders/pull/7 will be merged
+var builder = WebApplication.CreateBuilder(args)
+    .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());
+// var builder = Host.CreateApplicationBuilder(args);
+
+builder.Services.AddSerilog();
+
+var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.Configuration);
+if (!botConfigurationSection.Exists())
 {
-    // TODO: fix when https://github.com/DaveSenn/ConfigurationPlaceholders/pull/7 will be merged
-    var builder = WebApplication.CreateBuilder(args)
-        .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());
-    // var builder = Host.CreateApplicationBuilder(args);
-
-    var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.Configuration);
-    if (!botConfigurationSection.Exists())
-    {
-        throw new InvalidOperationException("Bot configuration is missing");
-    }
-    builder.Services.Configure<BotConfiguration>(botConfigurationSection);
-
-    builder.AddPg<DatabaseContext>();
-
-    builder.Services
-        .AddHttpClient("telegram_bot_client")
-        .AddTypedClient<ITelegramBotClient>((httpClient, sp) =>
-        {
-            var botConfig = sp.GetConfiguration<BotConfiguration>();
-            TelegramBotClientOptions options = new(botConfig.Token);
-            return new TelegramBotClient(options, httpClient);
-        });
-
-    builder.Services
-        .AddScoped<UpdateHandlers>()
-        .AddScoped<ReceiverService>()
-        .AddHostedService<PollingService>();
-
-    var host = builder.Build();
-    host.UsePg<DatabaseContext>();
-    await host.RunAsync();
+    throw new InvalidOperationException("Bot configuration is missing");
 }
-else
-{
-    var builder = WebApplication.CreateBuilder(args)
-        .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());
+builder.Services.Configure<BotConfiguration>(botConfigurationSection);
 
-    var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.Configuration);
-    if (!botConfigurationSection.Exists())
+builder.AddPg<ICommonDbContext, TelegramPgContext, TelegramPgConfig>();
+builder.AddPg<IReadonlyDbContext, ReadonlyPgContext, ReadonlyPgConfig>();
+
+builder.AddCore();
+
+builder.Services
+    .AddHttpClient("telegram_bot_client")
+    .AddTypedClient<ITelegramBotClient>((httpClient, sp) =>
     {
-        throw new InvalidOperationException("Bot configuration is missing");
-    }
-    builder.Services.Configure<BotConfiguration>(botConfigurationSection);
+        var botConfig = sp.GetConfiguration<BotConfiguration>();
+        TelegramBotClientOptions options = new(botConfig.Token);
+        return new TelegramBotClient(options, httpClient);
+    });
 
-    builder.AddPg<DatabaseContext>();
+builder.Services
+    .AddScoped<CommandHandlingService>()
+    .AddScoped<UpdateHandlingService>()
+    .AddScoped<ReceiverService>()
+    .AddHostedService<PollingService>()
+    .AddModules();
 
-    builder.Services
-        .AddHttpClient("telegram_bot_client")
-        .AddTypedClient<ITelegramBotClient>((httpClient, sp) =>
-        {
-            var botConfig = sp.GetConfiguration<BotConfiguration>();
-            TelegramBotClientOptions options = new(botConfig.Token);
-            return new TelegramBotClient(options, httpClient);
-        });
-
-    builder.Services
-        .AddScoped<UpdateHandlers>()
-        .AddHostedService<ConfigureWebhook>();
-
-    builder.Services
-        .AddControllers();
-
-    var app = builder.Build();
-    app.UsePg<DatabaseContext>();
-    app.MapControllers();
-    await app.RunAsync();
-}
+var host = builder.Build();
+host.UsePg<TelegramPgContext, TelegramPgConfig>();
+await host.RunAsync();
 
 namespace PiBot.Telegram
 {
@@ -86,8 +66,5 @@ namespace PiBot.Telegram
         public static readonly string Configuration = "BotConfiguration";
 
         public string Token { get; init; } = default!;
-        public string HostAddress { get; init; } = default!;
-        public string Route { get; init; } = default!;
-        public string SecretToken { get; init; } = default!;
     }
 }

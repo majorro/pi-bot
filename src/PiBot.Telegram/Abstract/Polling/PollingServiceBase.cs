@@ -1,6 +1,6 @@
 namespace PiBot.Telegram.Abstract.Polling;
 
-public abstract class PollingServiceBase<TReceiverService> : BackgroundService
+internal abstract class PollingServiceBase<TReceiverService> : BackgroundService
     where TReceiverService : IReceiverService
 {
     private readonly IServiceProvider _serviceProvider;

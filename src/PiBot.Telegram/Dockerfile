@@ -1,17 +1,20 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+﻿# TODO: fix when https://github.com/DaveSenn/ConfigurationPlaceholders/pull/7 will be merged
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+#FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 8443
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["PiBot.Telegram/PiBot.Telegram.csproj", "PiBot.Telegram/"]
-COPY ["PiBot.Utils/PiBot.Utils.csproj", "PiBot.Utils/"]
+COPY ["PiBot.Data/PiBot.Data.csproj", "PiBot.Data/"]
 COPY ["PiBot.Core/PiBot.Core.csproj", "PiBot.Core/"]
+# TODO: remove when available on nuget.org
+RUN dotnet nuget add source https://pkgs.dev.azure.com/tgbots/Telegram.Bot/_packaging/release/nuget/v3/index.json
 RUN dotnet restore "PiBot.Telegram/PiBot.Telegram.csproj"
 COPY "PiBot.Telegram" "PiBot.Telegram"
-COPY "PiBot.Utils" "PiBot.Utils"
+COPY "PiBot.Data" "PiBot.Data"
 COPY "PiBot.Core" "PiBot.Core"
 WORKDIR "/src/PiBot.Telegram"
 RUN dotnet build "PiBot.Telegram.csproj" -c $BUILD_CONFIGURATION -o /app/build
@@ -24,5 +27,4 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-ENV ASPNETCORE_HTTP_PORTS=8443
 ENTRYPOINT ["dotnet", "PiBot.Telegram.dll"]

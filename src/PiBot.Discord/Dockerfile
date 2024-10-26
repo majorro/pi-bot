@@ -8,11 +8,13 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["PiBot.Discord/PiBot.Discord.csproj", "PiBot.Discord/"]
-COPY ["PiBot.Utils/PiBot.Utils.csproj", "PiBot.Utils/"]
+COPY ["PiBot.Data/PiBot.Data.csproj", "PiBot.Data/"]
 COPY ["PiBot.Core/PiBot.Core.csproj", "PiBot.Core/"]
+# TODO: remove when available on nuget.org
+RUN dotnet nuget add source https://pkgs.dev.azure.com/tgbots/Telegram.Bot/_packaging/release/nuget/v3/index.json
 RUN dotnet restore "PiBot.Discord/PiBot.Discord.csproj"
 COPY "PiBot.Discord" "PiBot.Discord"
-COPY "PiBot.Utils" "PiBot.Utils"
+COPY "PiBot.Data" "PiBot.Data"
 COPY "PiBot.Core" "PiBot.Core"
 WORKDIR "/src/PiBot.Discord"
 RUN dotnet build "PiBot.Discord.csproj" -c $BUILD_CONFIGURATION -o /app/build

@@ -1,29 +1,35 @@
 ﻿# TODO: add "core" .yml
 
 services:
+  postgres:
+    image: postgres:latest
+    container_name: pi-bot-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${PI_BOT_DB_USER}
+      POSTGRES_PASSWORD: ${PI_BOT_DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
   telegram:
-    image: majorro/pi-bot:tg-latest
+    image: majorro/pi-bot-tg:latest
+    container_name: pi-bot-telegram
     restart: always
     env_file:
       - .env
     depends_on:
       - postgres
   discord:
-    image: majorro/pi-bot:dc-latest
+    image: majorro/pi-bot-dc:latest
+    container_name: pi-bot-discord
     restart: always
     env_file:
       - .env
     depends_on:
       - postgres
-  postgres:
-    image: postgres
-    restart: always
-    ports:
-      - "5432:5432"
-    env_file:
-      - .env
-    volumes:
-      - db-data:/var/lib/postgresql/data
 
 volumes:
   db-data:

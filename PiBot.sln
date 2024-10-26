@@ -15,6 +15,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiBot.Telegram", "src\PiBot
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiBot.Data", "src\PiBot.Data\PiBot.Data.csproj", "{C6F0769B-9E1E-4710-A5F3-49A414B2AC95}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{676FE209-8B71-405D-A4A9-0F05504CB82E}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\add-common-migrations.sh = scripts\add-common-migrations.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

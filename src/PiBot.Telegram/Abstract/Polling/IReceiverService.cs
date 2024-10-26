@@ -1,6 +1,6 @@
 namespace PiBot.Telegram.Abstract.Polling;
 
-public interface IReceiverService
+internal interface IReceiverService
 {
     Task ReceiveAsync(CancellationToken stoppingToken);
 }
