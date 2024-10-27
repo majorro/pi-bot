@@ -2,7 +2,7 @@
 
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:17
     container_name: pi-bot-postgres
     restart: always
     ports:
