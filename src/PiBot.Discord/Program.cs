@@ -71,8 +71,20 @@ builder.Services.AddHostedService<CommandHandlingService>();
 
 var host = builder.Build();
 host.UsePg<DiscordPgContext, DiscordPgConfig>();
+NotifyOnStartup(host);
 await host.RunAsync();
+return;
 
+// TODO: move to service?
+static void NotifyOnStartup(IApplicationBuilder app)
+{
+    var client = app.ApplicationServices.GetRequiredService<DiscordSocketClient>();
+    client.Ready += async () =>
+    {
+        var channel = await client.GetDMChannelAsync(1291456115111891014);
+        await channel.SendMessageAsync("стартуем!");
+    };
+}
 
 namespace PiBot.Discord
 {

@@ -10,6 +10,7 @@ using PiBot.Telegram.Services.Polling;
 using Serilog;
 using Serilog.Events;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -57,7 +58,16 @@ builder.Services
 
 var host = builder.Build();
 host.UsePg<TelegramPgContext, TelegramPgConfig>();
+await NotifyOnStartup(host);
 await host.RunAsync();
+return;
+
+// TODO: move to service?
+static async Task NotifyOnStartup(IApplicationBuilder app)
+{
+    var client = app.ApplicationServices.GetRequiredService<ITelegramBotClient>();
+    await client.SendTextMessageAsync(new ChatId(417500081), "стартуем!");
+}
 
 namespace PiBot.Telegram
 {
