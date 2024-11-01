@@ -1,10 +1,5 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using Microsoft.EntityFrameworkCore;
+﻿using Discord.Commands;
 using PiBot.Core.CommandHandlers;
-using PiBot.Data.Discord;
-using PiBot.Data.Discord.Models;
 
 namespace PiBot.Discord.Modules;
 

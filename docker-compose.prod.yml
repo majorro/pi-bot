@@ -1,4 +1,4 @@
-﻿# TODO: add "core" .yml
+﻿# TODO: add "core" .yml https://docs.docker.com/compose/how-tos/multiple-compose-files/extends/
 
 services:
   postgres:

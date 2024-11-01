@@ -55,7 +55,8 @@ internal class UpdateHandlingService : IUpdateHandler
             }
             catch
             {
-                await _botClient.SendTextMessageAsync(msg.Chat, "ВСЕ В ДЕРЬМЕ!!!");
+                await _botClient.SendTextMessageAsync(msg.Chat, "@majorro228");
+                await _botClient.SendTextMessageAsync(msg.Chat, "https://media1.tenor.com/m/GWvoxXpr7VsAAAAC/%D0%BC%D1%8B-%D0%B2-%D0%B4%D0%B5%D1%80%D1%8C%D0%BC%D0%B5.gif");
                 success = false;
                 throw;
             }

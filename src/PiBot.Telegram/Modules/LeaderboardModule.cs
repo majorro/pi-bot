@@ -76,7 +76,7 @@ internal class LeaderboardModule : ModuleBase
         var i = 1;
         foreach (var row in rows)
         {
-            var user = Mention(row.User);
+            var user = $"{row.User.FirstName} {row.User.LastName}".TrimEnd();
             var thingySize = Italics(row.ThingySize);
             var str = $"{i++}. {user} — {thingySize} см\n";
             builder.Append(row.User.TelegramId == Context.User.Id ? Bold(str) : str);

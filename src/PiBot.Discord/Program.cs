@@ -13,6 +13,7 @@ using PiBot.Discord.Services.Commands;
 using Serilog;
 using Serilog.Events;
 
+// TODO: exclude polling http req logs
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)

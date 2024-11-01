@@ -63,11 +63,15 @@ public class CommandHandlingService : DiscordClientService
             await scopedContext.Scope.DisposeAsync();
 
         if (!string.IsNullOrEmpty(result?.ErrorReason))
-            await context.Channel.SendMessageAsync(result.ErrorReason);
+        {
+            await context.Channel.SendMessageAsync(MentionUtils.MentionUser(473600264805285909));
+            await context.Channel.SendMessageAsync("https://media1.tenor.com/m/GWvoxXpr7VsAAAAC/%D0%BC%D1%8B-%D0%B2-%D0%B4%D0%B5%D1%80%D1%8C%D0%BC%D0%B5.gif");
+        }
 
         var commandName = command.IsSpecified
             ? command.Value.Aliases[0]
             : "A command";
-        Logger.LogInformation("[{Guild}] [{Channel}] [{User}] [{Command}]: {Result}", context.Guild, context.Channel, context.User, commandName, result);
+        if (result?.IsSuccess ?? false) Logger.LogInformation("[{Guild}] [{Channel}] [{User}] [{Command}]: {Result}", context.Guild, context.Channel, context.User, commandName, result);
+        else Logger.LogError("[{Guild}] [{Channel}] [{User}] [{Command}]: {Result}", context.Guild, context.Channel, context.User, commandName, result?.ErrorReason);
     }
 }
