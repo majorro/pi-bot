@@ -7,12 +7,18 @@ internal class CommandHandlingService(ILogger<CommandHandlingService> logger, IS
 {
     public async Task<Message?> HandleCommandAsync(string command, User user, Chat chat)
     {
-        var split = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var split = command.Split(new[] {' ', '\n'}, StringSplitOptions.RemoveEmptyEntries); // TODO: add any existing empty symbols
         var commandName = split[0].Split('@')[0];
         var commandArgs = split[1..];
 
         using var scope = serviceProvider.CreateScope();
-        var module = scope.ServiceProvider.GetRequiredKeyedService<ModuleBase>(commandName);
+        ModuleBase? module;
+        try // TODO: cache known commands
+        {
+            module = scope.ServiceProvider.GetRequiredKeyedService<ModuleBase>(commandName);
+        }
+        catch (InvalidOperationException e) { return null;}
+
         module.Context = new ModuleContext(user, chat);
 
         // TODO: implement subcommands
