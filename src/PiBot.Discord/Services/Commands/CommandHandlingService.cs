@@ -62,7 +62,7 @@ public class CommandHandlingService : DiscordClientService
         if (context is ScopedSocketCommandContext scopedContext)
             await scopedContext.Scope.DisposeAsync();
 
-        if (!string.IsNullOrEmpty(result?.ErrorReason))
+        if (!string.IsNullOrEmpty(result?.ErrorReason) && result.Error != CommandError.UnknownCommand)
         {
             await context.Channel.SendMessageAsync(MentionUtils.MentionUser(473600264805285909));
             await context.Channel.SendMessageAsync("https://media1.tenor.com/m/GWvoxXpr7VsAAAAC/%D0%BC%D1%8B-%D0%B2-%D0%B4%D0%B5%D1%80%D1%8C%D0%BC%D0%B5.gif");
