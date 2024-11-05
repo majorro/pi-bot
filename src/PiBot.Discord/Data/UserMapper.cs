@@ -7,7 +7,7 @@ internal static class UserMapper
 {
     public static void Map(this DiscordUser user, SocketUser dto)
     {
-        user.DisplayName = dto.GlobalName ?? user.DisplayName;
+        user.DisplayName = dto.GlobalName ?? user.Username;
         user.Username = dto.Username;
     }
     public static DiscordUser ToModel(this SocketUser dto)

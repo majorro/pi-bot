@@ -30,6 +30,7 @@ public class StateService : DiscordClientService
         Client.GuildMemberUpdated += OnGuildMemberUpdatedAsync;
     }
 
+    // TODO: now it called for each guild of user if changed some profile info, find some ways to optimise
     private async Task OnGuildMemberUpdatedAsync(Cacheable<SocketGuildUser, ulong> _, SocketGuildUser newUser)
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
