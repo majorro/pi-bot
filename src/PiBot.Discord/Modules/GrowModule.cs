@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PiBot.Core.CommandHandlers;
 using PiBot.Data.Discord;
 using PiBot.Data.Discord.Models;
+using PiBot.Discord.Data;
 
 namespace PiBot.Discord.Modules;
 
@@ -27,13 +28,7 @@ public class GrowModule(DiscordPgContext dbContext, GrowHandler handler) : Modul
             var user = await dbContext.DiscordUsers.SingleOrDefaultAsync(x => x.DiscordId == userDto.Id);
             if (user == null)
             {
-                user ??= new DiscordUser
-                {
-                    DiscordId = userDto.Id,
-                    DisplayName = userDto.DisplayName,
-                    Username = userDto.Username,
-                };
-
+                user = userDto.ToModel();
                 dbContext.DiscordUsers.Add(user);
                 await dbContext.SaveChangesAsync();
             }
@@ -41,11 +36,7 @@ public class GrowModule(DiscordPgContext dbContext, GrowHandler handler) : Modul
             var guild = await dbContext.DiscordGuilds.SingleOrDefaultAsync(x => x.DiscordId == userDto.Guild.Id);
             if (guild == null)
             {
-                guild ??= new DiscordGuild
-                {
-                    DiscordId = userDto.Guild.Id,
-                };
-
+                guild = userDto.Guild.ToModel();
                 dbContext.DiscordGuilds.Add(guild);
                 await dbContext.SaveChangesAsync();
             }
@@ -55,7 +46,6 @@ public class GrowModule(DiscordPgContext dbContext, GrowHandler handler) : Modul
                 User = user,
                 Community = guild,
             };
-
             dbContext.DiscordUserGuilds.Add(userGuild);
             await dbContext.SaveChangesAsync();
 

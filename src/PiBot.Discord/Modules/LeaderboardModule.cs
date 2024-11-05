@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PiBot.Core.CommandHandlers;
 using PiBot.Data.Discord;
 using PiBot.Data.Discord.Models;
+using PiBot.Discord.Data;
 
 namespace PiBot.Discord.Modules;
 
@@ -22,11 +23,7 @@ public class LeaderboardModule(DiscordPgContext dbContext, LeaderboardHandler ha
             .SingleOrDefaultAsync();
         if (guildId == null)
         {
-            var guild = new DiscordGuild
-            {
-                DiscordId = Context.Guild.Id,
-            };
-
+            var guild = Context.Guild.ToModel();
             dbContext.Add(guild);
             await dbContext.SaveChangesAsync();
 
