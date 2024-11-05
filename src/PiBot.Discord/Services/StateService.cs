@@ -1,41 +1,45 @@
-﻿using Discord.Addons.Hosting;
+﻿using Discord;
+using Discord.Addons.Hosting;
 using Discord.Addons.Hosting.Util;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
+using PiBot.Data.Discord;
+using PiBot.Discord.Data;
 
 namespace PiBot.Discord.Services;
 
-// TODO: implement if needed
 public class StateService : DiscordClientService
 {
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IServiceProvider _serviceProvider;
+    private CancellationToken _cancellationToken;
 
     public StateService(
         DiscordSocketClient client,
-        ILogger<DiscordClientService> logger,
-        IServiceScopeFactory scopeFactory) : base(client, logger)
+        ILogger<StateService> logger,
+        IServiceProvider serviceProvider) : base(client, logger)
     {
-        _scopeFactory = scopeFactory;
+        _serviceProvider = serviceProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _cancellationToken = stoppingToken;
+
         await Client.WaitForReadyAsync(stoppingToken);
 
-        await UpdateStateAsync(stoppingToken);
+        Client.GuildMemberUpdated += OnGuildMemberUpdatedAsync;
     }
 
-    private async Task UpdateStateAsync(CancellationToken cancellationToken = default)
+    private async Task OnGuildMemberUpdatedAsync(Cacheable<SocketGuildUser, ulong> _, SocketGuildUser newUser)
     {
-        throw new NotImplementedException();
-    }
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<DiscordPgContext>();
 
-    private async Task HandleServerJoin(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    private async Task HandleUserServerJoin(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        var oldUser = await dbContext.DiscordUsers.SingleOrDefaultAsync(x => x.DiscordId == newUser.Id, _cancellationToken);
+        if (oldUser != null)
+        {
+            oldUser.Map(newUser);
+            await dbContext.SaveChangesAsync(_cancellationToken);
+        }
     }
 }

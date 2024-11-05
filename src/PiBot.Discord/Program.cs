@@ -9,6 +9,7 @@ using PiBot.Data.Common.Extensions;
 using PiBot.Data.Discord;
 using PiBot.Data.Readonly;
 using PiBot.Discord;
+using PiBot.Discord.Services;
 using PiBot.Discord.Services.Commands;
 using Serilog;
 using Serilog.Events;
@@ -69,6 +70,7 @@ builder.Services.AddCommandService((conf, _) =>
 // });
 
 builder.Services.AddHostedService<CommandHandlingService>();
+builder.Services.AddHostedService<StateService>();
 
 var host = builder.Build();
 host.UsePg<DiscordPgContext, DiscordPgConfig>();
