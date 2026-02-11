@@ -1,3 +1,4 @@
+using System.Text.Json;
 using PiBot.Core.Configuration;
 using PiBot.Core.Contracts;
 using PiBot.Data.Common.Extensions;
@@ -17,11 +18,13 @@ var builder = WebApplication.CreateBuilder(args)
     .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());
 // var builder = Host.CreateApplicationBuilder(args);
 
-if (builder.Environment.IsProduction())
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole(x =>
 {
-    builder.Logging.ClearProviders();
-    builder.Logging.AddJsonConsole();
-}
+    x.IncludeScopes = true;
+    if (!builder.Environment.IsProduction())
+        x.JsonWriterOptions = new JsonWriterOptions() { Indented = true };
+});
 
 var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.SectionName);
 if (!botConfigurationSection.Exists())

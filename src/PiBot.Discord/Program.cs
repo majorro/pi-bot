@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Discord;
 using Discord.Addons.Hosting;
 using Discord.Commands;
@@ -19,11 +20,13 @@ DotEnv.TryLoad("../../.env"); // for local run
 var builder = WebApplication.CreateBuilder(args)
     .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());
 
-if (builder.Environment.IsProduction())
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole(x =>
 {
-    builder.Logging.ClearProviders();
-    builder.Logging.AddJsonConsole();
-}
+    x.IncludeScopes = true;
+    if (!builder.Environment.IsProduction())
+        x.JsonWriterOptions = new JsonWriterOptions() { Indented = true };
+});
 
 var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.SectionName);
 if (!botConfigurationSection.Exists())
