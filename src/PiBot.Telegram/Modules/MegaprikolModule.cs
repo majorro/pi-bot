@@ -34,6 +34,6 @@ internal class MegaprikolModule : ModuleBase
     private async Task<Message> GetMegaprikolAsync()
     {
         // await _botClient.SendTextMessageAsync(Context.Chat, await _handler.HandleAsync());
-        return await _botClient.SendTextMessageAsync(Context.Chat, "мегаприколы допиливаются(");
+        return await BotClient.SendTextMessageAsync(Context.Chat, "мегаприколы допиливаются(");
     }
 }

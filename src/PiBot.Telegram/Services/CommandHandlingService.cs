@@ -17,7 +17,7 @@ internal class CommandHandlingService(ILogger<CommandHandlingService> logger, IS
         {
             module = scope.ServiceProvider.GetRequiredKeyedService<ModuleBase>(commandName);
         }
-        catch (InvalidOperationException e) { return null;}
+        catch (InvalidOperationException e) { return null; }
 
         module.Context = new ModuleContext(user, chat);
 

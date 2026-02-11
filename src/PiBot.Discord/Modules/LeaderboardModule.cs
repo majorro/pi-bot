@@ -6,12 +6,13 @@ using PiBot.Core.CommandHandlers;
 using PiBot.Data.Discord;
 using PiBot.Data.Discord.Models;
 using PiBot.Discord.Data;
+using PiBot.Discord.Services.Commands;
 
 namespace PiBot.Discord.Modules;
 
 [Group("leaderboard")]
 [Alias("lb")]
-public class LeaderboardModule(DiscordPgContext dbContext, LeaderboardHandler handler) : ModuleBase<SocketCommandContext>
+public class LeaderboardModule(DiscordPgContext dbContext, LeaderboardHandler handler) : ModuleBase<PiBotCommandContext>
 {
     [Command]
     public async Task GetLeaderboardAsync()

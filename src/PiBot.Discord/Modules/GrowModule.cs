@@ -6,12 +6,13 @@ using PiBot.Core.CommandHandlers;
 using PiBot.Data.Discord;
 using PiBot.Data.Discord.Models;
 using PiBot.Discord.Data;
+using PiBot.Discord.Services.Commands;
 
 namespace PiBot.Discord.Modules;
 
 [Group("grow")]
 [Alias("g")]
-public class GrowModule(DiscordPgContext dbContext, GrowHandler handler) : ModuleBase<SocketCommandContext>
+public class GrowModule(DiscordPgContext dbContext, GrowHandler handler) : ModuleBase<PiBotCommandContext>
 {
     [Command]
     public async Task GrowAsync()

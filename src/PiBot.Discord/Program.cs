@@ -11,16 +11,6 @@ using PiBot.Data.Readonly;
 using PiBot.Discord;
 using PiBot.Discord.Services;
 using PiBot.Discord.Services.Commands;
-using Serilog;
-using Serilog.Events;
-
-// TODO: exclude polling http req logs
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .CreateLogger();
 
 DotEnv.TryLoad("../../.env"); // for local run
 
@@ -29,7 +19,11 @@ DotEnv.TryLoad("../../.env"); // for local run
 var builder = WebApplication.CreateBuilder(args)
     .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());
 
-builder.Services.AddSerilog();
+if (builder.Environment.IsProduction())
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddJsonConsole();
+}
 
 var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.SectionName);
 if (!botConfigurationSection.Exists())
