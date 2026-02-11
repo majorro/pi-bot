@@ -5,12 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using PiBot.Core.CommandHandlers;
 using PiBot.Data.Discord;
 using PiBot.Data.Discord.Models;
+using PiBot.Discord.Data;
+using PiBot.Discord.Services.Commands;
 
 namespace PiBot.Discord.Modules;
 
 [Group("leaderboard")]
 [Alias("lb")]
-public class LeaderboardModule(DiscordPgContext dbContext, LeaderboardHandler handler) : ModuleBase<SocketCommandContext>
+public class LeaderboardModule(DiscordPgContext dbContext, LeaderboardHandler handler) : ModuleBase<PiBotCommandContext>
 {
     [Command]
     public async Task GetLeaderboardAsync()
@@ -22,11 +24,7 @@ public class LeaderboardModule(DiscordPgContext dbContext, LeaderboardHandler ha
             .SingleOrDefaultAsync();
         if (guildId == null)
         {
-            var guild = new DiscordGuild
-            {
-                DiscordId = Context.Guild.Id,
-            };
-
+            var guild = Context.Guild.ToModel();
             dbContext.Add(guild);
             await dbContext.SaveChangesAsync();
 

@@ -9,17 +9,8 @@ using PiBot.Data.Common.Extensions;
 using PiBot.Data.Discord;
 using PiBot.Data.Readonly;
 using PiBot.Discord;
+using PiBot.Discord.Services;
 using PiBot.Discord.Services.Commands;
-using Serilog;
-using Serilog.Events;
-
-// TODO: exclude polling http req logs
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .CreateLogger();
 
 DotEnv.TryLoad("../../.env"); // for local run
 
@@ -28,9 +19,13 @@ DotEnv.TryLoad("../../.env"); // for local run
 var builder = WebApplication.CreateBuilder(args)
     .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());
 
-builder.Services.AddSerilog();
+if (builder.Environment.IsProduction())
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddJsonConsole();
+}
 
-var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.Configuration);
+var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.SectionName);
 if (!botConfigurationSection.Exists())
 {
     throw new InvalidOperationException("Bot configuration is missing");
@@ -69,6 +64,7 @@ builder.Services.AddCommandService((conf, _) =>
 // });
 
 builder.Services.AddHostedService<CommandHandlingService>();
+builder.Services.AddHostedService<StateService>();
 
 var host = builder.Build();
 host.UsePg<DiscordPgContext, DiscordPgConfig>();
@@ -91,7 +87,7 @@ namespace PiBot.Discord
 {
     public class BotConfiguration
     {
-        public static readonly string Configuration = "BotConfiguration";
+        public static readonly string SectionName = nameof(BotConfiguration);
 
         public string Token { get; init; } = default!;
     }

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using Discord;
 using Discord.Addons.Hosting;
 using Discord.Addons.Hosting.Util;
@@ -23,17 +24,47 @@ public class CommandHandlingService : DiscordClientService
     {
         _commands = commands;
         _scopeFactory = scopeFactory;
-
-        Client.MessageReceived += HandleMessageAsync;
-        _commands.CommandExecuted += OnCommandExecutedAsync;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        Client.Log += LogAsync;
+
+        Client.MessageReceived += HandleMessageAsync;
+        _commands.CommandExecuted += OnCommandExecutedAsync;
+
         await using var scope = _scopeFactory.CreateAsyncScope();
         await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), scope.ServiceProvider);
 
         await Client.WaitForReadyAsync(stoppingToken);
+    }
+
+    private Task LogAsync(LogMessage message)
+    {
+        var level = message.Severity switch
+        {
+            LogSeverity.Critical => LogLevel.Critical,
+            LogSeverity.Error => LogLevel.Error,
+            LogSeverity.Warning => LogLevel.Warning,
+            LogSeverity.Info => LogLevel.Information,
+            LogSeverity.Verbose => LogLevel.Debug,
+            LogSeverity.Debug => LogLevel.Debug,
+            _ => LogLevel.Information
+        };
+
+        using (Logger.BeginScope(new Dictionary<string, object>
+               {
+                   ["DiscordSource"] = message.Source
+               }))
+        {
+            Logger.Log(
+                level,
+                message.Exception,
+                "{Message}", // TODO: is it ok?
+                message.Message);
+        }
+
+        return Task.CompletedTask;
     }
 
     private async Task HandleMessageAsync(SocketMessage messageParam)
@@ -52,15 +83,20 @@ public class CommandHandlingService : DiscordClientService
     private async Task HandleCommandAsync(SocketUserMessage message, int argPos)
     {
         var scope = _scopeFactory.CreateAsyncScope();
-        var context = new ScopedSocketCommandContext(scope, Client, message);
+        var context = new PiBotCommandContext(scope, Client, message);
 
         await _commands.ExecuteAsync(context, argPos, scope.ServiceProvider);
     }
 
     private async Task OnCommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult? result)
     {
-        if (context is ScopedSocketCommandContext scopedContext)
+        var elapsed = 0;
+        if (context is PiBotCommandContext scopedContext)
+        {
+            scopedContext.Execution.Stop();
+            elapsed = (int)scopedContext.Execution.Elapsed.TotalMilliseconds;
             await scopedContext.Scope.DisposeAsync();
+        }
 
         if (!string.IsNullOrEmpty(result?.ErrorReason) && result.Error != CommandError.UnknownCommand)
         {
@@ -70,8 +106,14 @@ public class CommandHandlingService : DiscordClientService
 
         var commandName = command.IsSpecified
             ? command.Value.Aliases[0]
-            : "A command";
-        if (result?.IsSuccess ?? false) Logger.LogInformation("[{Guild}] [{Channel}] [{User}] [{Command}]: {Result}", context.Guild, context.Channel, context.User, commandName, result);
-        else Logger.LogError("[{Guild}] [{Channel}] [{User}] [{Command}]: {Result}", context.Guild, context.Channel, context.User, commandName, result?.ErrorReason);
+            : "Unknown";
+        if (result?.IsSuccess ?? false)
+            Logger.LogInformation(
+                "[{Guild}] [{Channel}] [{User}] [{Command}]: {Result} in {DurationMs}ms",
+                context.Guild, context.Channel, context.User, commandName, result, elapsed);
+        else
+            Logger.LogError(
+                "[{Guild}] [{Channel}] [{User}] [{Command}]: {Result} in {DurationMs}ms",
+                context.Guild, context.Channel, context.User, commandName, result?.ErrorReason, elapsed);
     }
 }

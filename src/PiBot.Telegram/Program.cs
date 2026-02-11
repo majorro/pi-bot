@@ -7,17 +7,8 @@ using PiBot.Telegram;
 using PiBot.Telegram.Modules.Configuration;
 using PiBot.Telegram.Services;
 using PiBot.Telegram.Services.Polling;
-using Serilog;
-using Serilog.Events;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .CreateLogger();
 
 DotEnv.TryLoad("../../.env"); // for local run
 
@@ -26,9 +17,13 @@ var builder = WebApplication.CreateBuilder(args)
     .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());
 // var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddSerilog();
+if (builder.Environment.IsProduction())
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddJsonConsole();
+}
 
-var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.Configuration);
+var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.SectionName);
 if (!botConfigurationSection.Exists())
 {
     throw new InvalidOperationException("Bot configuration is missing");
@@ -41,7 +36,7 @@ builder.AddPg<IReadonlyDbContext, ReadonlyPgContext, ReadonlyPgConfig>();
 builder.AddCore();
 
 builder.Services
-    .AddHttpClient("telegram_bot_client")
+    .AddHttpClient("TelegramBotClient")
     .AddTypedClient<ITelegramBotClient>((httpClient, sp) =>
     {
         var botConfig = sp.GetConfiguration<BotConfiguration>();
@@ -73,7 +68,7 @@ namespace PiBot.Telegram
 {
     public class BotConfiguration
     {
-        public static readonly string Configuration = "BotConfiguration";
+        public static readonly string SectionName = nameof(BotConfiguration);
 
         public string Token { get; init; } = default!;
     }

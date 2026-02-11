@@ -1,0 +1,14 @@
+﻿services:
+  postgres:
+    ports:
+      - "5432:5432"
+  telegram:
+    profiles: ["app"]
+    build:
+      context: src/
+      dockerfile: PiBot.Telegram/Dockerfile
+  discord:
+    profiles: ["app"]
+    build:
+      context: src/
+      dockerfile: PiBot.Discord/Dockerfile

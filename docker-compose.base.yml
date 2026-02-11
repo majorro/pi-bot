@@ -1,37 +1,37 @@
-﻿# TODO: add "core" .yml https://docs.docker.com/compose/how-tos/multiple-compose-files/extends/
-
-services:
+﻿services:
   postgres:
-    image: postgres:17
+    image: postgres:18-alpine
     container_name: pi-bot-postgres
-    restart: always
-    ports:
-      - "5432:5432"
+    restart: unless-stopped
     env_file:
       - .env
     environment:
       POSTGRES_USER: ${PI_BOT_DB_USER}
       POSTGRES_PASSWORD: ${PI_BOT_DB_PASSWORD}
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_interval: 2s
+      start_period: 15s
+      test: ["CMD-SHELL", "pg_isready"]
+      timeout: 5s
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - ${PI_BOT_DB_DATA_PATH}:/var/lib/postgresql
   telegram:
-    profiles: ["app"]
     image: ghcr.io/majorro/pi-bot-tg:latest
     container_name: pi-bot-telegram
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
   discord:
-    profiles: ["app"]
     image: ghcr.io/majorro/pi-bot-dc:latest
     container_name: pi-bot-discord
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env
     depends_on:
-      - postgres
-
-volumes:
-  db-data:
+      postgres:
+        condition: service_healthy

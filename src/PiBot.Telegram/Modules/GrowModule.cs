@@ -10,21 +10,14 @@ using static PiBot.Telegram.Utils.HtmlFormatHelper;
 
 namespace PiBot.Telegram.Modules;
 
-internal class GrowModule : ModuleBase
+internal class GrowModule(ITelegramBotClient botClient, TelegramPgContext dbContext, GrowHandler handler)
+    : ModuleBase(botClient)
 {
     public override string CommandName => "grow";
     public override string[] Aliases => ["g"];
 
-    private readonly TelegramPgContext _dbContext;
-    private readonly GrowHandler _handler;
-
-    [UsedImplicitly] private GrowModule() : base(null) { }
-
-    public GrowModule(ITelegramBotClient botClient, TelegramPgContext dbContext, GrowHandler handler) : base(botClient)
-    {
-        _dbContext = dbContext;
-        _handler = handler;
-    }
+    // why???? bro can you just leave comments...
+    [UsedImplicitly] private GrowModule() : this(null, null, null) { }
 
     public override async Task<Message> ExecuteAsync(string subCommand = "", params string[] args) =>
         subCommand switch
@@ -38,13 +31,13 @@ internal class GrowModule : ModuleBase
         var chatDto = Context.Chat;
 
         // TODO: refactor
-        var userChatId = await _dbContext.TelegramUserChats
+        var userChatId = await dbContext.TelegramUserChats
             .Where(x => x.TelegramUserId == userDto.Id && x.TelegramChatId == chatDto.Id)
             .Select(x => (int?)x.Id)
             .SingleOrDefaultAsync();
         if (userChatId == null)
         {
-            var user = await _dbContext.TelegramUsers.SingleOrDefaultAsync(x => x.TelegramId == userDto.Id);
+            var user = await dbContext.TelegramUsers.SingleOrDefaultAsync(x => x.TelegramId == userDto.Id);
             if (user == null)
             {
                 user ??= new TelegramUser
@@ -55,11 +48,11 @@ internal class GrowModule : ModuleBase
                     Username = userDto.Username,
                 };
 
-                _dbContext.TelegramUsers.Add(user);
-                await _dbContext.SaveChangesAsync();
+                dbContext.TelegramUsers.Add(user);
+                await dbContext.SaveChangesAsync();
             }
 
-            var chat = await _dbContext.TelegramChats.SingleOrDefaultAsync(x => x.TelegramId == chatDto.Id);
+            var chat = await dbContext.TelegramChats.SingleOrDefaultAsync(x => x.TelegramId == chatDto.Id);
             if (chat == null)
             {
                 chat ??= new TelegramChat
@@ -67,8 +60,8 @@ internal class GrowModule : ModuleBase
                     TelegramId = chatDto.Id,
                 };
 
-                _dbContext.TelegramChats.Add(chat);
-                await _dbContext.SaveChangesAsync();
+                dbContext.TelegramChats.Add(chat);
+                await dbContext.SaveChangesAsync();
             }
 
             var userChat = new TelegramUserChat()
@@ -77,14 +70,14 @@ internal class GrowModule : ModuleBase
                 Community = chat,
             };
 
-            _dbContext.TelegramUserChats.Add(userChat);
-            await _dbContext.SaveChangesAsync();
+            dbContext.TelegramUserChats.Add(userChat);
+            await dbContext.SaveChangesAsync();
 
             userChatId = userChat.Id;
         }
         // TODO: refactor
 
-        var result = await _handler.Handle(userChatId.Value);
+        var result = await handler.Handle(userChatId.Value);
 
         var mention = Mention(userDto);
         var message = result?.Growth switch
@@ -94,6 +87,6 @@ internal class GrowModule : ModuleBase
             < 0 => $"{mention}, ваша штуковина уменьшилась на {Bold(Math.Abs(result.Growth))} см!!! теперь её размер {Bold(result.Size)} см!!!",
         };
 
-        return await _botClient.SendTextMessageAsync(chatDto, message, parseMode: ParseMode.Html);
+        return await BotClient.SendTextMessageAsync(chatDto, message, parseMode: ParseMode.Html);
     }
 }

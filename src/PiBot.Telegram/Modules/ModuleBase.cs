@@ -20,12 +20,12 @@ internal abstract class ModuleBase
         }
     }
 
-    protected readonly ITelegramBotClient _botClient;
+    protected readonly ITelegramBotClient BotClient;
     private ModuleContext? _context;
 
     protected ModuleBase(ITelegramBotClient botClient)
     {
-        _botClient = botClient;
+        BotClient = botClient;
     }
 
     public abstract Task<Message> ExecuteAsync(string subCommand = "", params string[] args);

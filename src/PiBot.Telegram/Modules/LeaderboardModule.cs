@@ -65,7 +65,7 @@ internal class LeaderboardModule : ModuleBase
             .ToArrayAsync();
 
         var message = ComposeMessage(dataRows);
-        return await _botClient.SendTextMessageAsync(Context.Chat, message, parseMode: ParseMode.Html);
+        return await BotClient.SendTextMessageAsync(Context.Chat, message, parseMode: ParseMode.Html);
     }
 
     private string ComposeMessage(LeaderboardRowData[] rows)
