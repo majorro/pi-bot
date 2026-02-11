@@ -21,7 +21,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create dummy .env
-        run: touch .env
+        run: echo "PI_BOT_DB_DATA_PATH=/" > .env
 
       - name: Build images
         run: docker compose --profile app build
