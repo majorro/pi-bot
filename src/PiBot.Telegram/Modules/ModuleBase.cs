@@ -3,7 +3,7 @@ using Telegram.Bot.Types;
 
 namespace PiBot.Telegram.Modules;
 
-internal abstract class ModuleBase
+internal abstract class ModuleBase(ITelegramBotClient botClient)
 {
     public abstract string CommandName { get; }
     public virtual string[] Aliases => [];
@@ -20,13 +20,8 @@ internal abstract class ModuleBase
         }
     }
 
-    protected readonly ITelegramBotClient BotClient;
+    protected readonly ITelegramBotClient BotClient = botClient;
     private ModuleContext? _context;
-
-    protected ModuleBase(ITelegramBotClient botClient)
-    {
-        BotClient = botClient;
-    }
 
     public abstract Task<Message> ExecuteAsync(string subCommand = "", params string[] args);
 }

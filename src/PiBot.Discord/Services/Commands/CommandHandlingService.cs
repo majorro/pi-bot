@@ -8,33 +8,25 @@ using Discord.WebSocket;
 
 namespace PiBot.Discord.Services.Commands;
 
-public class CommandHandlingService : DiscordClientService
+public class CommandHandlingService(
+    DiscordSocketClient client,
+    ILogger<CommandHandlingService> logger,
+    CommandService commands,
+    IServiceScopeFactory scopeFactory)
+    : DiscordClientService(client, logger)
 {
-    private readonly CommandService _commands;
-    private readonly IServiceScopeFactory _scopeFactory;
-
     // TODO: add to per-guild config
     private const string Prefix = "!";
-
-    public CommandHandlingService(
-        DiscordSocketClient client,
-        ILogger<CommandHandlingService> logger,
-        CommandService commands,
-        IServiceScopeFactory scopeFactory) : base(client, logger)
-    {
-        _commands = commands;
-        _scopeFactory = scopeFactory;
-    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Client.Log += LogAsync;
 
         Client.MessageReceived += HandleMessageAsync;
-        _commands.CommandExecuted += OnCommandExecutedAsync;
+        commands.CommandExecuted += OnCommandExecutedAsync;
 
-        await using var scope = _scopeFactory.CreateAsyncScope();
-        await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), scope.ServiceProvider);
+        await using var scope = scopeFactory.CreateAsyncScope();
+        await commands.AddModulesAsync(Assembly.GetEntryAssembly(), scope.ServiceProvider);
 
         await Client.WaitForReadyAsync(stoppingToken);
     }
@@ -82,10 +74,10 @@ public class CommandHandlingService : DiscordClientService
 
     private async Task HandleCommandAsync(SocketUserMessage message, int argPos)
     {
-        var scope = _scopeFactory.CreateAsyncScope();
+        var scope = scopeFactory.CreateAsyncScope();
         var context = new PiBotCommandContext(scope, Client, message);
 
-        await _commands.ExecuteAsync(context, argPos, scope.ServiceProvider);
+        await commands.ExecuteAsync(context, argPos, scope.ServiceProvider);
     }
 
     private async Task OnCommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult? result)

@@ -5,26 +5,18 @@ using Telegram.Bot.Types;
 
 namespace PiBot.Telegram.Services;
 
-internal class UpdateHandlingService : IUpdateHandler
+internal class UpdateHandlingService(
+    ILogger<UpdateHandlingService> logger,
+    CommandHandlingService commandHandlingService)
+    : IUpdateHandler
 {
-    private readonly ILogger<UpdateHandlingService> _logger;
-    private readonly CommandHandlingService _commandHandlingService;
-
-    private ITelegramBotClient _botClient = default!;
-
-    public UpdateHandlingService(
-        ILogger<UpdateHandlingService> logger,
-        CommandHandlingService commandHandlingService)
-    {
-        _logger = logger;
-        _commandHandlingService = commandHandlingService;
-    }
+    private ITelegramBotClient _botClient = null!;
 
     public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken = default)
     {
         _botClient = botClient;
 
-        _logger.LogError("{Exception}", exception);
+        logger.LogError("{Exception}", exception);
         // Cooldown in case of network connection error
         if (exception is RequestException)
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
@@ -51,25 +43,25 @@ internal class UpdateHandlingService : IUpdateHandler
             var success = true;
             try
             {
-                await _commandHandlingService.HandleCommandAsync(messageText[1..], msg.From!, msg.Chat);
+                await commandHandlingService.HandleCommandAsync(messageText[1..], msg.From!, msg.Chat);
             }
             catch
             {
-                await _botClient.SendTextMessageAsync(msg.Chat, "@majorro228");
-                await _botClient.SendTextMessageAsync(msg.Chat, "https://media1.tenor.com/m/GWvoxXpr7VsAAAAC/%D0%BC%D1%8B-%D0%B2-%D0%B4%D0%B5%D1%80%D1%8C%D0%BC%D0%B5.gif");
+                await _botClient.SendMessage(msg.Chat, "@majorro228");
+                await _botClient.SendMessage(msg.Chat, "https://media1.tenor.com/m/GWvoxXpr7VsAAAAC/%D0%BC%D1%8B-%D0%B2-%D0%B4%D0%B5%D1%80%D1%8C%D0%BC%D0%B5.gif");
                 success = false;
                 throw;
             }
             finally
             {
-                _logger.LogInformation("[{Chat}] [{User}] [{Command}]: {Result}", msg.Chat, msg.From!, messageText, success ? "Success" : "Fail");
+                logger.LogInformation("[{Chat}] [{User}] [{Command}]: {Result}", msg.Chat, msg.From!, messageText, success ? "Success" : "Fail");
             }
         }
     }
 
     private Task UnknownUpdateHandlerAsync(Update update)
     {
-        _logger.LogWarning("Unknown update type: {UpdateType}", update.Type);
+        logger.LogWarning("Unknown update type: {UpdateType}", update.Type);
         return Task.CompletedTask;
     }
 }

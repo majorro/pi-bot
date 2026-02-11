@@ -12,7 +12,7 @@ using Telegram.Bot.Types;
 
 DotEnv.TryLoad("../../.env"); // for local run
 
-// TODO: fix when https://github.com/DaveSenn/ConfigurationPlaceholders/pull/7 will be merged
+// TODO: remove ConfigurationPlaceholders
 var builder = WebApplication.CreateBuilder(args)
     .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());
 // var builder = Host.CreateApplicationBuilder(args);
@@ -61,7 +61,7 @@ return;
 static async Task NotifyOnStartup(IApplicationBuilder app)
 {
     var client = app.ApplicationServices.GetRequiredService<ITelegramBotClient>();
-    await client.SendTextMessageAsync(new ChatId(417500081), "стартуем!");
+    await client.SendMessage(new ChatId(417500081), "стартуем!");
 }
 
 namespace PiBot.Telegram

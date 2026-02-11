@@ -14,7 +14,7 @@ using PiBot.Discord.Services.Commands;
 
 DotEnv.TryLoad("../../.env"); // for local run
 
-// TODO: fix when https://github.com/DaveSenn/ConfigurationPlaceholders/pull/7 will be merged
+// TODO: remove ConfigurationPlaceholders
 // var builder = Host.CreateApplicationBuilder(args);
 var builder = WebApplication.CreateBuilder(args)
     .AddConfigurationPlaceholders(new EnvironmentVariableCustomMissingResolver());

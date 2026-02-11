@@ -29,7 +29,7 @@ internal abstract class ReceiverServiceBase<TUpdateHandler> : IReceiverService
             DropPendingUpdates = false,
         };
 
-        var botUser = await _botClient.GetMeAsync(stoppingToken);
+        var botUser = await _botClient.GetMe(stoppingToken);
         _logger.LogInformation("Start receiving updates for {BotName}", botUser.Username);
 
         await _botClient.ReceiveAsync(

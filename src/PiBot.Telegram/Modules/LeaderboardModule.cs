@@ -11,22 +11,14 @@ using static PiBot.Telegram.Utils.HtmlFormatHelper;
 
 namespace PiBot.Telegram.Modules;
 
-internal class LeaderboardModule : ModuleBase
+internal class LeaderboardModule(ITelegramBotClient botClient, TelegramPgContext dbContext, LeaderboardHandler handler)
+    : ModuleBase(botClient)
 {
     public override string CommandName => "leaderboard";
     public override string[] Aliases => ["lb"];
 
-    private readonly TelegramPgContext _dbContext;
-    private readonly LeaderboardHandler _handler;
+    [UsedImplicitly] private LeaderboardModule() : this(null, null, null) { }
 
-    [UsedImplicitly] private LeaderboardModule() : base(null) { }
-
-    public LeaderboardModule(ITelegramBotClient botClient, TelegramPgContext dbContext, LeaderboardHandler handler) : base(botClient)
-    {
-        _dbContext = dbContext;
-        _handler = handler;
-    }
-    
     public override async Task<Message> ExecuteAsync(string subCommand = "", params string[] args) =>
         subCommand switch
         {
@@ -36,7 +28,7 @@ internal class LeaderboardModule : ModuleBase
     private async Task<Message> GetLeaderboardAsync()
     {
         // TODO: refactor
-        var chatId = await _dbContext.TelegramChats
+        var chatId = await dbContext.TelegramChats
             .Where(x => x.TelegramId == Context.Chat.Id)
             .Select(x => (int?)x.Id)
             .SingleOrDefaultAsync();
@@ -47,14 +39,14 @@ internal class LeaderboardModule : ModuleBase
                 TelegramId = Context.Chat.Id,
             };
 
-            _dbContext.Add(chat);
-            await _dbContext.SaveChangesAsync();
+            dbContext.Add(chat);
+            await dbContext.SaveChangesAsync();
 
             chatId = chat.Id;
         }
         // TODO: refactor
 
-        var dataRows = await _handler
+        var dataRows = await handler
             .GetQuery(chatId.Value)
             .Select(x => new LeaderboardRowData
             (
@@ -65,7 +57,7 @@ internal class LeaderboardModule : ModuleBase
             .ToArrayAsync();
 
         var message = ComposeMessage(dataRows);
-        return await BotClient.SendTextMessageAsync(Context.Chat, message, parseMode: ParseMode.Html);
+        return await BotClient.SendMessage(Context.Chat, message, parseMode: ParseMode.Html);
     }
 
     private string ComposeMessage(LeaderboardRowData[] rows)

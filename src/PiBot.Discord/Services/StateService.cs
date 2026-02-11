@@ -8,18 +8,13 @@ using PiBot.Discord.Data;
 
 namespace PiBot.Discord.Services;
 
-public class StateService : DiscordClientService
+public class StateService(
+    DiscordSocketClient client,
+    ILogger<StateService> logger,
+    IServiceProvider serviceProvider)
+    : DiscordClientService(client, logger)
 {
-    private readonly IServiceProvider _serviceProvider;
     private CancellationToken _cancellationToken;
-
-    public StateService(
-        DiscordSocketClient client,
-        ILogger<StateService> logger,
-        IServiceProvider serviceProvider) : base(client, logger)
-    {
-        _serviceProvider = serviceProvider;
-    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -33,7 +28,7 @@ public class StateService : DiscordClientService
     // TODO: now it called for each guild of user if changed some profile info, find some ways to optimise
     private async Task OnGuildMemberUpdatedAsync(Cacheable<SocketGuildUser, ulong> _, SocketGuildUser newUser)
     {
-        await using var scope = _serviceProvider.CreateAsyncScope();
+        await using var scope = serviceProvider.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<DiscordPgContext>();
 
         var oldUser = await dbContext.DiscordUsers.SingleOrDefaultAsync(x => x.DiscordId == newUser.Id, _cancellationToken);

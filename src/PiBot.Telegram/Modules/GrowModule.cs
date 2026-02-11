@@ -87,6 +87,6 @@ internal class GrowModule(ITelegramBotClient botClient, TelegramPgContext dbCont
             < 0 => $"{mention}, ваша штуковина уменьшилась на {Bold(Math.Abs(result.Growth))} см!!! теперь её размер {Bold(result.Size)} см!!!",
         };
 
-        return await BotClient.SendTextMessageAsync(chatDto, message, parseMode: ParseMode.Html);
+        return await BotClient.SendMessage(chatDto, message, parseMode: ParseMode.Html);
     }
 }
