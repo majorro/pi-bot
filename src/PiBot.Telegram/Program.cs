@@ -28,7 +28,7 @@ var builder = WebApplication.CreateBuilder(args)
 
 builder.Services.AddSerilog();
 
-var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.Configuration);
+var botConfigurationSection = builder.Configuration.GetSection(BotConfiguration.SectionName);
 if (!botConfigurationSection.Exists())
 {
     throw new InvalidOperationException("Bot configuration is missing");
@@ -73,7 +73,7 @@ namespace PiBot.Telegram
 {
     public class BotConfiguration
     {
-        public static readonly string Configuration = "BotConfiguration";
+        public static readonly string SectionName = nameof(BotConfiguration);
 
         public string Token { get; init; } = default!;
     }

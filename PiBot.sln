@@ -4,7 +4,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.yml = docker-compose.yml
 		.env = .env
-		docker-compose.prod.yml = docker-compose.prod.yml
+		docker-compose.base.yml = docker-compose.base.yml
+		docker-compose.override.yml = docker-compose.override.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiBot.Core", "src\PiBot.Core\PiBot.Core.csproj", "{33995D01-3B85-4598-9FD7-50D047CF4703}"
