@@ -1,3 +1,4 @@
+using PiBot.Telegram.Modules;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
@@ -41,9 +42,10 @@ internal class UpdateHandlingService(
         if (messageText.StartsWith('/'))
         {
             var success = true;
+            var ctx = new ModuleContext(msg.From!, msg.Chat);
             try
             {
-                await commandHandlingService.HandleCommandAsync(messageText[1..], msg.From!, msg.Chat);
+                await commandHandlingService.HandleCommandAsync(messageText[1..], ctx);
             }
             catch
             {
@@ -54,6 +56,7 @@ internal class UpdateHandlingService(
             }
             finally
             {
+                using var _ = logger.BeginScope(ctx.Meta);
                 logger.LogInformation("[{Chat}] [{User}] [{Command}]: {Result}", msg.Chat, msg.From!, messageText, success ? "Success" : "Fail");
             }
         }

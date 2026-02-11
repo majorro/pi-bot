@@ -5,7 +5,7 @@ namespace PiBot.Telegram.Services;
 
 internal class CommandHandlingService(ILogger<CommandHandlingService> logger, IServiceProvider serviceProvider)
 {
-    public async Task<Message?> HandleCommandAsync(string command, User user, Chat chat)
+    public async Task<Message?> HandleCommandAsync(string command, ModuleContext ctx)
     {
         var split = command.Split(new[] {' ', '\n'}, StringSplitOptions.RemoveEmptyEntries); // TODO: add any existing empty symbols
         var commandName = split[0].Split('@')[0];
@@ -19,7 +19,7 @@ internal class CommandHandlingService(ILogger<CommandHandlingService> logger, IS
         }
         catch (InvalidOperationException e) { return null; }
 
-        module.Context = new ModuleContext(user, chat);
+        module.Context = ctx;
 
         // TODO: implement subcommands
         return await module.ExecuteAsync(string.Empty, commandArgs);

@@ -11,6 +11,7 @@ public class PiBotCommandContext(AsyncServiceScope scope, DiscordSocketClient cl
     : SocketCommandContext(client, msg)
 {
     internal AsyncServiceScope Scope { get; } = scope;
+    internal IDictionary<string, object?> Meta { get; } = new Dictionary<string, object?>();
 
     internal Stopwatch Execution { get; } = Stopwatch.StartNew();
 }

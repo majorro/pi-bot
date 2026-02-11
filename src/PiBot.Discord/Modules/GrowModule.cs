@@ -65,5 +65,11 @@ public class GrowModule(DiscordPgContext dbContext, GrowHandler handler) : Modul
         };
 
         await ReplyAsync(message);
+
+        if (result is not null)
+        {
+            Context.Meta["Growth"] = result.Growth;
+            Context.Meta["Size"] = result.Size;
+        }
     }
 }

@@ -83,11 +83,15 @@ public class CommandHandlingService(
     private async Task OnCommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult? result)
     {
         var elapsed = 0;
+        IDisposable? loggerScope = null;
         if (context is PiBotCommandContext scopedContext)
         {
             scopedContext.Execution.Stop();
             elapsed = (int)scopedContext.Execution.Elapsed.TotalMilliseconds;
+
             await scopedContext.Scope.DisposeAsync();
+
+            loggerScope = Logger.BeginScope(scopedContext.Meta);
         }
 
         if (!string.IsNullOrEmpty(result?.ErrorReason) && result.Error != CommandError.UnknownCommand)
@@ -107,5 +111,7 @@ public class CommandHandlingService(
             Logger.LogError(
                 "[{Guild}] [{Channel}] [{User}] [{Command}]: {Result} in {DurationMs}ms",
                 context.Guild, context.Channel, context.User, commandName, result?.ErrorReason, elapsed);
+
+        loggerScope?.Dispose();
     }
 }
