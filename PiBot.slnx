@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Scripts/">
+    <File Path="scripts/add-common-migrations.sh" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".env" />
+    <File Path="docker-compose.base.yml" />
+    <File Path="docker-compose.override.yml" />
+    <File Path="docker-compose.yml" />
+    <File Path="example.env" />
+  </Folder>
+  <Project Path="src/PiBot.Core/PiBot.Core.csproj" />
+  <Project Path="src/PiBot.Data/PiBot.Data.csproj" />
+  <Project Path="src/PiBot.Discord/PiBot.Discord.csproj" />
+  <Project Path="src/PiBot.Telegram/PiBot.Telegram.csproj" />
+</Solution>
