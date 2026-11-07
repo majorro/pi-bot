@@ -64,6 +64,7 @@ builder.Services
 
 var host = builder.Build();
 host.UsePg<TelegramPgContext, TelegramPgConfig>();
+await RefreshTelegramUsers(host);
 await NotifyOnStartup(host);
 await host.RunAsync();
 return;
@@ -73,6 +74,13 @@ static async Task NotifyOnStartup(IApplicationBuilder app)
 {
     var client = app.ApplicationServices.GetRequiredService<ITelegramBotClient>();
     await client.SendMessage(new ChatId(417500081), "стартуем!");
+}
+
+static async Task RefreshTelegramUsers(IApplicationBuilder app)
+{
+    await using var scope = app.ApplicationServices.CreateAsyncScope();
+    var membershipService = scope.ServiceProvider.GetRequiredService<TelegramMembershipService>();
+    await membershipService.RefreshKnownUsersAndMembershipsAsync();
 }
 
 namespace PiBot.Telegram

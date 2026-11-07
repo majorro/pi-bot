@@ -48,6 +48,15 @@ internal sealed class TelegramMembershipService(
         }
     }
 
+    public async Task RefreshKnownUsersAndMembershipsAsync()
+    {
+        var userIds = await dbContext.TelegramUsers.Select(x => x.TelegramId).ToListAsync();
+        var groupIds = await dbContext.TelegramChats.Where(x => x.TelegramId < 0).Select(x => x.TelegramId).ToListAsync();
+        foreach (var userId in userIds)
+            foreach (var groupId in groupIds)
+                await RefreshChatMembershipAsync(groupId, userId);
+    }
+
     public async Task<TelegramUser> SaveUserAsync(User user)
     {
         var storedUser = await AddOrUpdateUserAsync(user);
