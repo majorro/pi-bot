@@ -27,6 +27,12 @@ public class TelegramPgContext(DbContextOptions<TelegramPgContext> options, IOpt
             entity.Property(e => e.FirstName).HasMaxLength(64);
             entity.Property(e => e.LastName).HasMaxLength(64);
             entity.Property(e => e.Username).HasMaxLength(32);
+            entity.Property(e => e.BirthdayNotificationsEnabled).HasDefaultValue(true);
+            entity.ToTable(table =>
+            {
+                table.HasCheckConstraint("ck_telegram_users_manual_birthday", CreateBirthdayConstraintSql("manual"));
+                table.HasCheckConstraint("ck_telegram_users_profile_birthday", CreateBirthdayConstraintSql("profile"));
+            });
         });
 
         modelBuilder.Entity<TelegramChat>(entity =>
@@ -62,6 +68,12 @@ public class TelegramPgContext(DbContextOptions<TelegramPgContext> options, IOpt
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
+
+    private static string CreateBirthdayConstraintSql(string birthdaySource) =>
+        $"({birthdaySource}_birthday_day IS NULL AND {birthdaySource}_birthday_month IS NULL) OR " +
+        $"({birthdaySource}_birthday_day IS NOT NULL AND {birthdaySource}_birthday_month IS NOT NULL AND " +
+        $"{birthdaySource}_birthday_month BETWEEN 1 AND 12 AND {birthdaySource}_birthday_day BETWEEN 1 AND " +
+        $"CASE {birthdaySource}_birthday_month WHEN 2 THEN 29 WHEN 4 THEN 30 WHEN 6 THEN 30 WHEN 9 THEN 30 WHEN 11 THEN 30 ELSE 31 END)";
 }
 
 public sealed class TelegramPgConfig : PgConfigBase

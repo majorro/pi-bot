@@ -17,7 +17,7 @@ namespace PiBot.Data.Telegram.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -92,6 +92,12 @@ namespace PiBot.Data.Telegram.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("BirthdayNotificationsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("birthday_notifications_enabled");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -102,6 +108,22 @@ namespace PiBot.Data.Telegram.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("last_name");
+
+                    b.Property<int?>("ManualBirthdayDay")
+                        .HasColumnType("integer")
+                        .HasColumnName("manual_birthday_day");
+
+                    b.Property<int?>("ManualBirthdayMonth")
+                        .HasColumnType("integer")
+                        .HasColumnName("manual_birthday_month");
+
+                    b.Property<int?>("ProfileBirthdayDay")
+                        .HasColumnType("integer")
+                        .HasColumnName("profile_birthday_day");
+
+                    b.Property<int?>("ProfileBirthdayMonth")
+                        .HasColumnType("integer")
+                        .HasColumnName("profile_birthday_month");
 
                     b.Property<long>("TelegramId")
                         .HasColumnType("bigint")
@@ -122,7 +144,12 @@ namespace PiBot.Data.Telegram.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_telegram_users_telegram_id");
 
-                    b.ToTable("telegram_users", (string)null);
+                    b.ToTable("telegram_users", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_telegram_users_manual_birthday", "(manual_birthday_day IS NULL AND manual_birthday_month IS NULL) OR (manual_birthday_day IS NOT NULL AND manual_birthday_month IS NOT NULL AND manual_birthday_month BETWEEN 1 AND 12 AND manual_birthday_day BETWEEN 1 AND CASE manual_birthday_month WHEN 2 THEN 29 WHEN 4 THEN 30 WHEN 6 THEN 30 WHEN 9 THEN 30 WHEN 11 THEN 30 ELSE 31 END)");
+
+                            t.HasCheckConstraint("ck_telegram_users_profile_birthday", "(profile_birthday_day IS NULL AND profile_birthday_month IS NULL) OR (profile_birthday_day IS NOT NULL AND profile_birthday_month IS NOT NULL AND profile_birthday_month BETWEEN 1 AND 12 AND profile_birthday_day BETWEEN 1 AND CASE profile_birthday_month WHEN 2 THEN 29 WHEN 4 THEN 30 WHEN 6 THEN 30 WHEN 9 THEN 30 WHEN 11 THEN 30 ELSE 31 END)");
+                        });
                 });
 
             modelBuilder.Entity("PiBot.Data.Telegram.Models.TelegramUserChat", b =>
@@ -137,6 +164,14 @@ namespace PiBot.Data.Telegram.Migrations
                     b.Property<int>("CommunityId")
                         .HasColumnType("integer")
                         .HasColumnName("community_id");
+
+                    b.Property<bool?>("IsMember")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_member");
+
+                    b.Property<DateTime?>("MembershipUpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("membership_updated_at");
 
                     b.Property<long>("TelegramChatId")
                         .HasColumnType("bigint")

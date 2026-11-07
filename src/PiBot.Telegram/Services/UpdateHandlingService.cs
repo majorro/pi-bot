@@ -1,14 +1,18 @@
+using PiBot.Core.Configuration;
 using PiBot.Telegram.Modules;
+using PiBot.Telegram.Services.Birthdays;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace PiBot.Telegram.Services;
 
 internal class UpdateHandlingService(
     ILogger<UpdateHandlingService> logger,
-    CommandHandlingService commandHandlingService)
+    CommandHandlingService commandHandlingService,
+    IServiceScopeFactory scopeFactory)
     : IUpdateHandler
 {
     private ITelegramBotClient _botClient = null!;
@@ -27,22 +31,69 @@ internal class UpdateHandlingService(
     {
         _botClient = botClient;
         cancellationToken.ThrowIfCancellationRequested();
+        await OnUpdate(update);
         await (update switch
         {
             { Message: { } message } => OnMessage(message),
+            { ChatMember: { } chatMember } => OnChatMember(chatMember),
             _ => UnknownUpdateHandlerAsync(update)
         });
     }
 
+    private async Task OnUpdate(Update update)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var membershipService = scope.ServiceProvider.GetRequiredService<TelegramMembershipService>();
+        var birthdayImportingService = scope.ServiceProvider.GetRequiredService<BirthdayProfileImporter>();
+
+        var newMemberships = await membershipService.TrackMembershipsAsync(update);
+        await birthdayImportingService.ImportBirthdaysForNewMembersAsync(newMemberships);
+    }
+
     private async Task OnMessage(Message msg)
     {
+        if (msg.ForwardOrigin is { } forwardOrigin)
+        {
+            if (msg.Chat.Type != ChatType.Private || msg.From is not { IsBot: false } forwardingUser || msg.SenderChat is not null)
+                return;
+
+            await using var scope = scopeFactory.CreateAsyncScope();
+            if (!scope.ServiceProvider.GetConfiguration<BotConfiguration>().AdminUserIds.Contains(forwardingUser.Id))
+                return;
+
+            if (forwardOrigin is not MessageOriginUser { SenderUser: { IsBot: false } originalSender })
+            {
+                await _botClient.SendMessage(msg.Chat, "This forward doesn't identify a person. If Telegram hides the sender, reply to their message in an allowed group instead.");
+                return;
+            }
+
+            var membershipService = scope.ServiceProvider.GetRequiredService<TelegramMembershipService>();
+            var user = await membershipService.SaveUserAsync(originalSender);
+            var displayName = string.IsNullOrEmpty(user.Username) ? user.FullName : $"@{user.Username}";
+            await _botClient.SendMessage(
+                chatId: msg.Chat,
+                text: $"User: {displayName} ({user.TelegramId})\nReply to the forwarded message with /birthday set DD.MM.",
+                replyParameters: new ReplyParameters { MessageId = msg.Id });
+            return;
+        }
+
         if (msg.Text is not { } messageText)
             return;
 
         if (messageText.StartsWith('/'))
         {
+            if (msg.From is not { IsBot: false } || msg.SenderChat is not null)
+                return;
+
             var success = true;
-            var ctx = new ModuleContext(msg.From!, msg.Chat);
+
+            var replyToUser = msg.ReplyToMessage switch
+            {
+                { ForwardOrigin: MessageOriginUser origin } => origin.SenderUser,
+                { ForwardOrigin: null, SenderChat: null, From: { } repliedUser } => repliedUser,
+                _ => null
+            };
+            var ctx = new ModuleContext(msg.From, msg.Chat, replyToUser);
             try
             {
                 await commandHandlingService.HandleCommandAsync(messageText[1..], ctx);
@@ -60,6 +111,11 @@ internal class UpdateHandlingService(
                 logger.LogInformation("[{Chat}] [{User}] [{Command}]: {Result}", msg.Chat, msg.From!, messageText, success ? "Success" : "Fail");
             }
         }
+    }
+
+    private Task OnChatMember(ChatMemberUpdated chatMember)
+    {
+        return Task.CompletedTask;
     }
 
     private Task UnknownUpdateHandlerAsync(Update update)

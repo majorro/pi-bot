@@ -7,6 +7,7 @@ using PiBot.Data.Telegram;
 using PiBot.Telegram;
 using PiBot.Telegram.Modules.Configuration;
 using PiBot.Telegram.Services;
+using PiBot.Telegram.Services.Birthdays;
 using PiBot.Telegram.Services.Polling;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -32,6 +33,8 @@ if (!botConfigurationSection.Exists())
     throw new InvalidOperationException("Bot configuration is missing");
 }
 builder.Services.Configure<BotConfiguration>(botConfigurationSection);
+builder.Services.Configure<BirthdayConfiguration>(builder.Configuration.GetSection(nameof(BirthdayConfiguration)));
+builder.Services.AddSingleton(TimeProvider.System);
 
 builder.AddPg<ICommonDbContext, TelegramPgContext, TelegramPgConfig>();
 builder.AddPg<IReadonlyDbContext, ReadonlyPgContext, ReadonlyPgConfig>();
@@ -51,7 +54,12 @@ builder.Services
     .AddScoped<CommandHandlingService>()
     .AddScoped<UpdateHandlingService>()
     .AddScoped<ReceiverService>()
+    .AddScoped<TelegramMembershipService>()
+    .AddScoped<BirthdayProfileImporter>()
+    .AddScoped<BirthdayTargetResolver>()
+    .AddScoped<BirthdaySender>()
     .AddHostedService<PollingService>()
+    .AddHostedService<BirthdayNotificationWorker>()
     .AddModules();
 
 var host = builder.Build();
@@ -74,5 +82,6 @@ namespace PiBot.Telegram
         public static readonly string SectionName = nameof(BotConfiguration);
 
         public string Token { get; init; } = default!;
+        public long[] AdminUserIds { get; init; } = [];
     }
 }

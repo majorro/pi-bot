@@ -25,7 +25,7 @@ internal abstract class ReceiverServiceBase<TUpdateHandler> : IReceiverService
     {
         var receiverOptions = new ReceiverOptions()
         {
-            AllowedUpdates = [UpdateType.Message],
+            AllowedUpdates = [UpdateType.Message, UpdateType.ChatMember],
             DropPendingUpdates = false,
         };
 

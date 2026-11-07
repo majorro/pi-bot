@@ -1,6 +1,7 @@
 ﻿.idea
 .env
 AGENTS.md
+docs
 
 # Created by https://www.toptal.com/developers/gitignore/api/csharp,rider
 # Edit at https://www.toptal.com/developers/gitignore?templates=csharp,rider

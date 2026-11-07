@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".env" />
+    <File Path=".gitignore" />
     <File Path="docker-compose.base.yml" />
     <File Path="docker-compose.override.yml" />
     <File Path="docker-compose.yml" />
@@ -13,4 +14,5 @@
   <Project Path="src/PiBot.Data/PiBot.Data.csproj" />
   <Project Path="src/PiBot.Discord/PiBot.Discord.csproj" />
   <Project Path="src/PiBot.Telegram/PiBot.Telegram.csproj" />
+  <Project Path="tests/Tests.Pibot.Telegram/Tests.Pibot.Telegram.csproj" />
 </Solution>
