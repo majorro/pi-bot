@@ -66,6 +66,10 @@ namespace PiBot.Data.Telegram.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Name")
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
                     b.Property<long>("TelegramId")
                         .HasColumnType("bigint")
                         .HasColumnName("telegram_id");

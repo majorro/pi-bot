@@ -20,6 +20,7 @@ internal sealed class TelegramMembershipService(
     public async Task<List<TelegramUserChat>> TrackMembershipsAsync(Update update)
     {
         var newMemberships = new List<TelegramUserChat>();
+        var chatName = update.Message?.NewChatTitle ?? update.Message?.Chat.Title ?? update.ChatMember?.Chat.Title;
         if (update.ChatMember is { } membershipUpdate && IsGroup(membershipUpdate.Chat))
         {
             await TrackUserMembershipAsync(
@@ -42,7 +43,7 @@ internal sealed class TelegramMembershipService(
         {
             if (user.IsBot)
                 return;
-            var (membership, isNewMembership) = await UpdateMembershipAsync(user, chatId, isMember);
+            var (membership, isNewMembership) = await UpdateMembershipAsync(user, chatId, isMember, chatName);
             if (isNewMembership)
                 newMemberships.Add(membership);
         }
@@ -50,11 +51,27 @@ internal sealed class TelegramMembershipService(
 
     public async Task RefreshKnownUsersAndMembershipsAsync()
     {
-        var userIds = await dbContext.TelegramUsers.Select(x => x.TelegramId).ToListAsync();
-        var groupIds = await dbContext.TelegramChats.Where(x => x.TelegramId < 0).Select(x => x.TelegramId).ToListAsync();
-        foreach (var userId in userIds)
-            foreach (var groupId in groupIds)
-                await RefreshChatMembershipAsync(groupId, userId);
+        var memberships = await dbContext.TelegramUserChats
+            .Include(x => x.Community)
+            .Where(x => x.TelegramChatId < 0)
+            .ToListAsync();
+        foreach (var group in memberships.GroupBy(x => x.TelegramChatId))
+        {
+            try
+            {
+                var chat = await botClient.GetChat(group.Key);
+                group.First().Community.Name = chat.Title;
+                await dbContext.SaveChangesAsync();
+            }
+            catch (ApiRequestException exception)
+            {
+                logger.LogWarning(exception, "Startup chat lookup failed for {ChatId}", group.Key);
+                continue;
+            }
+
+            foreach (var membership in group)
+                await RefreshChatMembershipAsync(membership.TelegramChatId, membership.TelegramUserId);
+        }
     }
 
     public async Task<TelegramUser> SaveUserAsync(User user)
@@ -67,7 +84,8 @@ internal sealed class TelegramMembershipService(
     public async Task<(TelegramUserChat Membership, bool IsNewMembership)> UpdateMembershipAsync(
         User user,
         long chatId,
-        bool? isMember)
+        bool? isMember,
+        string? chatName = null)
     {
         var storedUser = await AddOrUpdateUserAsync(user);
         var membership = await dbContext.TelegramUserChats.SingleOrDefaultAsync(
@@ -78,7 +96,7 @@ internal sealed class TelegramMembershipService(
             var chat = await dbContext.TelegramChats.SingleOrDefaultAsync(x => x.TelegramId == chatId);
             if (chat is null)
             {
-                chat = new TelegramChat { TelegramId = chatId };
+                chat = new TelegramChat { TelegramId = chatId, Name = chatName };
                 dbContext.TelegramChats.Add(chat);
             }
             membership = new TelegramUserChat
@@ -125,7 +143,7 @@ internal sealed class TelegramMembershipService(
             var chatMember = await botClient.GetChatMember(chatId, userId);
             if (chatMember.User.IsBot)
                 return null;
-            await UpdateMembershipAsync(chatMember.User, chatId, IsMember(chatMember));
+            await UpdateMembershipAsync(chatMember.User, chatId, IsMember(chatMember), chat.Title);
             return chatMember;
         }
         catch (ApiRequestException exception)

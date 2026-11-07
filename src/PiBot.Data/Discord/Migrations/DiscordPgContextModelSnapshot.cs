@@ -17,7 +17,7 @@ namespace PiBot.Data.Discord.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -69,6 +69,10 @@ namespace PiBot.Data.Discord.Migrations
                     b.Property<decimal>("DiscordId")
                         .HasColumnType("numeric(20,0)")
                         .HasColumnName("discord_id");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.HasKey("Id")
                         .HasName("pk_discord_guilds");

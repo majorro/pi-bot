@@ -9,6 +9,29 @@ namespace Tests.Pibot.Telegram.Membership;
 public sealed class TelegramMembershipTests
 {
     [Fact]
+    public async Task MessagesSetCommunityNameOnlyWhenCommunityIsCreated()
+    {
+        await using var testServices = new TelegramTestServices();
+        var chat = new Chat { Id = TelegramTestServices.BirthdayChatId, Type = ChatType.Supergroup, Title = "Original name" };
+        var user = new User { Id = 42, FirstName = "Member" };
+        var message = new Message { Chat = chat, From = user, Date = DateTime.UtcNow };
+        await testServices.MembershipService.TrackMembershipsAsync(new Update { Message = message });
+        (await testServices.DbContext.TelegramChats.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken)).Name.Should().Be("Original name");
+        var originalUpdatedAt = await testServices.DbContext.TelegramUserChats
+            .Select(x => x.MembershipUpdatedAt).SingleAsync(TestContext.Current.CancellationToken);
+
+        message.Chat.Title = "Renamed group";
+        message.NewChatTitle = "Renamed group";
+        await testServices.MembershipService.TrackMembershipsAsync(new Update { Message = message });
+        await testServices.MembershipService.UpdateMembershipAsync(new User { Id = 43, FirstName = "New member" }, chat.Id, true, "Renamed group");
+
+        var storedChat = await testServices.DbContext.TelegramChats.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
+        storedChat.Name.Should().Be("Original name");
+        var membership = await testServices.DbContext.TelegramUserChats.AsNoTracking().SingleAsync(x => x.TelegramUserId == 42, TestContext.Current.CancellationToken);
+        membership.MembershipUpdatedAt.Should().Be(originalUpdatedAt);
+    }
+
+    [Fact]
     public async Task UpdaterDiscoversNontextMessagesAndTracksLeaveRejoinWithoutDeletingRows()
     {
         await using var testServices = new TelegramTestServices();

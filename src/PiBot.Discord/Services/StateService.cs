@@ -23,6 +23,21 @@ public class StateService(
         await Client.WaitForReadyAsync(stoppingToken);
 
         Client.GuildMemberUpdated += OnGuildMemberUpdatedAsync;
+
+        foreach (var guild in Client.Guilds)
+            await UpdateGuildNameAsync(guild);
+    }
+
+    private async Task UpdateGuildNameAsync(SocketGuild guild)
+    {
+        await using var scope = serviceProvider.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<DiscordPgContext>();
+        var storedGuild = await dbContext.DiscordGuilds.SingleOrDefaultAsync(x => x.DiscordId == guild.Id, _cancellationToken);
+        if (storedGuild is null)
+            return;
+
+        storedGuild.Map(guild);
+        await dbContext.SaveChangesAsync(_cancellationToken);
     }
 
     // TODO: now it called for each guild of user if changed some profile info, find some ways to optimise

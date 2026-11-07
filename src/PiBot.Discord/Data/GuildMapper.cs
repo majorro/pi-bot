@@ -5,15 +5,19 @@ namespace PiBot.Discord.Data;
 
 internal static class GuildMapper
 {
-    public static void Map(this DiscordGuild user, SocketGuild dto) { }
+    public static void Map(this DiscordGuild guild, SocketGuild dto)
+    {
+        guild.Name = dto.Name;
+    }
+
     public static DiscordGuild ToModel(this SocketGuild dto)
     {
-        var user = new DiscordGuild()
+        var guild = new DiscordGuild()
         {
             DiscordId = dto.Id,
         };
-        user.Map(dto);
+        guild.Map(dto);
 
-        return user;
+        return guild;
     }
 }

@@ -6,7 +6,24 @@ namespace Tests.Pibot.Telegram.Membership;
 public sealed class TelegramMembershipRefreshTests
 {
     [Fact]
-    public async Task StartupRefreshUpdatesDetailsAndChecksEveryKnownUserInEveryKnownGroup()
+    public async Task CommunityNameIsRefreshedOnStartupRatherThanOnMembershipLookups()
+    {
+        await using var testServices = new TelegramTestServices();
+        await testServices.MembershipService.UpdateMembershipAsync(
+            new User { Id = 42, FirstName = "Member" },
+            TelegramTestServices.BirthdayChatId,
+            true,
+            "Original name");
+
+        await testServices.MembershipService.RefreshChatMembershipAsync(TelegramTestServices.BirthdayChatId, 42);
+
+        (await testServices.DbContext.TelegramChats.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken)).Name.Should().Be("Original name");
+        await testServices.MembershipService.RefreshKnownUsersAndMembershipsAsync();
+        (await testServices.DbContext.TelegramChats.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken)).Name.Should().Be("Birthday test group");
+    }
+
+    [Fact]
+    public async Task StartupRefreshOnlyUpdatesExistingGroupMemberships()
     {
         await using var testServices = new TelegramTestServices();
         await testServices.SeedBirthdayUserAsync(manualBirthdayDay: 1, manualBirthdayMonth: 11, notificationsEnabled: false);
@@ -36,7 +53,8 @@ public sealed class TelegramMembershipRefreshTests
         await testServices.MembershipService.RefreshKnownUsersAndMembershipsAsync();
 
         var users = await testServices.DbContext.TelegramUsers.AsNoTracking().ToListAsync(TestContext.Current.CancellationToken);
-        users.Should().OnlyContain(x => x.FirstName == $"Updated {x.TelegramId}" && x.LastName == "Surname" && x.Username == $"updated_{x.TelegramId}");
+        users.Where(x => x.TelegramId != 44).Should().OnlyContain(x => x.FirstName == $"Updated {x.TelegramId}" && x.LastName == "Surname" && x.Username == $"updated_{x.TelegramId}");
+        users.Single(x => x.TelegramId == 44).FirstName.Should().Be("Private user");
         var birthdayUser = users.Single(x => x.TelegramId == 42);
         birthdayUser.ManualBirthdayDay.Should().Be(1);
         birthdayUser.ManualBirthdayMonth.Should().Be(11);
@@ -45,11 +63,13 @@ public sealed class TelegramMembershipRefreshTests
         birthdayUser.BirthdayNotificationsEnabled.Should().BeFalse();
         var memberships = await testServices.DbContext.TelegramUserChats.AsNoTracking()
             .Where(x => x.TelegramChatId < 0).ToListAsync(TestContext.Current.CancellationToken);
-        memberships.Should().HaveCount(6);
+        memberships.Should().HaveCount(2);
         memberships.Single(x => x.TelegramUserId == 42 && x.TelegramChatId == TelegramTestServices.BirthdayChatId).IsMember.Should().BeFalse();
         memberships.Single(x => x.TelegramUserId == 43 && x.TelegramChatId == -999).IsMember.Should().BeTrue();
-        memberships.Single(x => x.TelegramUserId == 44 && x.TelegramChatId == TelegramTestServices.BirthdayChatId).IsMember.Should().BeTrue();
-        testServices.ApiStub.Requests.Where(x => x.Method == "getChatMember").Should().HaveCount(6);
+        memberships.Should().NotContain(x => x.TelegramUserId == 44);
+        (await testServices.DbContext.TelegramChats.Where(x => x.TelegramId < 0).ToListAsync(TestContext.Current.CancellationToken))
+            .Should().OnlyContain(x => x.Name == "Birthday test group");
+        testServices.ApiStub.Requests.Where(x => x.Method == "getChatMember").Should().HaveCount(2);
         testServices.ApiStub.Requests.Should().NotContain(x => x.Method == "getChat" && x.Body.GetProperty("chat_id").GetInt64() > 0);
     }
 
